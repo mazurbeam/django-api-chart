@@ -1,0 +1,135 @@
+# Default values for graphql-api-chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: ""
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 2000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 11000
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: chart-example.local
+      paths: []
+  tls:
+    - secretName: chart-example-tls
+      hosts:
+          - chart-example.local
+
+resources:
+  limits:
+    cpu: 300m
+    memory: 256Mi
+  requests:
+    cpu: 200m
+    memory: 128Mi
+
+autoscaling:
+  enabled: true
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+projectName: foo
+environment: bar
+namespace: foo
+
+# this name should match the folder name the config folder lives in. ex: with vennity -> vennity.config.production
+appName: foobar
+
+
+celeryBeat:
+  enabled: false
+
+  command: ["celery", "beat", "-A", "config.celery_app", "-l", "info"]
+
+  podSecurityContext: {}
+
+  securityContext: {}
+
+  resources: {}
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+celeryWorker:
+  enabled: false
+  command: ["celery", "worker", "-A", "config.celery_app", "-l", "info", "-Q", "celery"]
+
+celerFlower:
+  enabled: false
+
+  command: ["celery", "flower", "-A", "config.celery_app", "--address=0.0.0.0", "--port=5555"]
+
+  service:
+    type: ClusterIP
+    port: 5555
+
+  ingress:
+    enabled: false
+    annotations: {}
+    hosts:
+      - host: chart-example.local
+        paths: []
+    tls: []
+
+  podSecurityContext: {}
+
+  securityContext: {}
+
+  resources: {}
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+collectstaticJob:
+  enabled: true
+
+migrateJob:
+  enabled: true

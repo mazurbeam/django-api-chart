@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Values.projectName }}-{{ .Values.environment }}-migrate"
+  labels:
+    {{- include "django-api-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migrate-job
+spec:
+  template:
+    #    ttlSecondsAfterFinished: 60
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "django-api-chart.serviceAccountName" . }}
+
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: "{{ .Values.projectName }}-{{ .Values.environment }}-migrate"
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - python initenv.py && . ./export_env.sh &&
+              sleep 5 && echo "Begin Migration ..." &&
+              python manage.py migrate --settings={{ .Values.appName }}.config.production && rm .env
+          env:
+            - name: DEPLOY_ENV
+              value: {{ .Values.environment }}
+            - name: ENV
+              value: "production"
+          envFrom:
+            - secretRef:
+                name: "{{ .Values.namespace }}-{{ .Values.environment }}"
+            - secretRef:
+                name: "{{ .Values.namespace }}-{{ .Values.environment }}-migrations"
+      restartPolicy: Never
+  backoffLimit: 0
