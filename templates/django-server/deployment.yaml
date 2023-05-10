@@ -51,12 +51,13 @@ spec:
           command:
             - sh
             - -c
+            - python initenv.py && . ./export_env.sh &&
             {{ if eq .Values.environment "prod" }}
-            - gunicorn --bind 0.0.0.0:8000 {{ .Values.appName }}.wsgi:application --log-level info --timeout 180 --workers 1 --threads 4
+              python manage.py serve
             {{ else if eq .Values.environment "test" }}
-            - gunicorn --bind 0.0.0.0:7000 {{ .Values.appName }}.wsgi:application --log-level info --timeout 180 --workers 1
+              python manage.py serve --port 7000 --probe-port 7001
             {{ else }}
-            - gunicorn --bind 0.0.0.0:6000 {{ .Values.appName }}.wsgi:application --log-level info --timeout 180 --workers 1 --threads 2
+              python manage.py serve --port 6000 --probe-port 6001
             {{ end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -67,28 +68,40 @@ spec:
             {{ else }}
             - containerPort: 6000
             {{ end }}
+          startupProbe:
+            httpGet:
+              path: /startup
+              {{ if eq .Values.environment "prod" }}
+              port: 8001
+              {{ else if eq .Values.environment "test" }}
+              port: 7001
+              {{ else }}
+              port: 6001
+              {{ end }}
+            failureThreshold: 30
+            periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /readiness
+              path: /ready
               {{ if eq .Values.environment "prod" }}
-              port: 8000
+              port: 8001
               {{ else if eq .Values.environment "test" }}
-              port: 7000
+              port: 7001
               {{ else }}
-              port: 6000
+              port: 6001
               {{ end }}
-            initialDelaySeconds: 30
+            initialDelaySeconds: 3
           livenessProbe:
             httpGet:
-              path: /readiness
+              path: /alive
               {{ if eq .Values.environment "prod" }}
-              port: 8000
+              port: 8001
               {{ else if eq .Values.environment "test" }}
-              port: 7000
+              port: 7001
               {{ else }}
-              port: 6000
+              port: 6001
               {{ end }}
-            initialDelaySeconds: 30
+            initialDelaySeconds: 3
           resources:
             {{ if eq .Values.environment "prod" }}
             {{- toYaml .Values.resources | nindent 12 }}

@@ -18,7 +18,7 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: "{{ .Values.projectName }}-{{ .Values.environment }}-migrate"
+        - name: "{{ .Values.projectName }}-{{ .Values.environment }}-collectstatic"
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
