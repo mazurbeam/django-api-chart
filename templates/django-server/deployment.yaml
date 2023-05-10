@@ -103,16 +103,7 @@ spec:
               {{ end }}
             initialDelaySeconds: 3
           resources:
-            {{ if eq .Values.environment "prod" }}
             {{- toYaml .Values.resources | nindent 12 }}
-            {{ else }}
-            requests:
-              cpu: 250m
-              memory: 500Mi
-            limits:
-              cpu: 500m
-              memory: 750Mi
-            {{ end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
